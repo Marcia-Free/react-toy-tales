@@ -4,6 +4,7 @@ import './App.css';
 import Header from './components/Header'
 import ToyForm from './components/ToyForm'
 import ToyContainer from './components/ToyContainer'
+import Filter from "./components/Filter";
 
 
 class App extends React.Component{
@@ -12,7 +13,9 @@ constructor() {
   this.state = 
   {
     display: false,
-    toyData: []
+    toyData: [],
+    showUnliked: false,
+    sortBy: ''
   }
 }
 
@@ -23,21 +26,9 @@ constructor() {
     })
   }
 
-  addNewToy = (e) => {
-    e.preventDefault()
-      const newToy = 
-      {
-        id: 9,
-        name: e.target.name.value,
-        image: e.target.image.value,
-        likes: 0,
-
-      }
-      const newToyArr = [...this.state.toyData, newToy]
-
-      this.setState
-      ({
-        toyData: newToyArr
+  addNewToy = (newToy) => {
+      this.setState({
+        toyData: [...this.state.toyData, newToy]
       })
   }
 
@@ -66,7 +57,6 @@ constructor() {
   }
   
 
-
   componentDidMount() {
     fetch('http://localhost:3000/toys')
     .then(res => res.json())
@@ -78,7 +68,42 @@ constructor() {
     })
   }
 
+  toggleUnliked = () => {
+    this.setState({
+      showUnliked: !this.state.showUnliked
+    })
+  }
+
+  updateSort = (e) => {
+    this.setState({
+      sortBy: e.target.value
+    })
+  }
+
+  findToys = () => {
+    let updatedToys = this.state.toyData;
+
+    if (this.state.showUnliked) {
+      updatedToys = this.state.toyData.filter( toy => toy.likes === 0)
+    } 
+
+    if (this.state.sortBy === 'liked5>=') {
+      updatedToys = updatedToys.filter( toy => {
+        return toy.likes >= 5
+      })
+
+    } else if (this.state.sortBy === 'liked4<=') {
+      updatedToys = updatedToys.filter( toy => {
+        return toy.likes <= 4
+      })
+    }
+    return updatedToys
+
+  }
+
   render(){
+    const toysToShow = this.findToys()
+
     return (
       <>
         <Header/>
@@ -90,8 +115,9 @@ constructor() {
         }
         <div className="buttonContainer">
           <button onClick={this.handleClick}> Add a Toy </button>
+          <Filter toggleUnliked={this.toggleUnliked} updateSort={this.updateSort}/>
         </div>
-        <ToyContainer toys={this.state.toyData} deleteToy ={this.deleteToy} increaseLikes={this.increaseLikes}/>
+        <ToyContainer toys={toysToShow} deleteToy ={this.deleteToy} increaseLikes={this.increaseLikes}/>
       </>
     );
   }
